@@ -1,0 +1,309 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
+using System.Xml.Linq;
+using Microsoft.Office.Interop.Word;
+
+namespace XML_Converter
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string line_buf = string.Empty;
+            int guide_count = 2410000;
+            string ecu_name = "";
+            string ecu_name_buf = "adem";
+            string sae = "";
+            string fmi = "";
+            string descriptions = "";
+
+            int line_to_edit = 2;
+            StringBuilder Sb = new StringBuilder();
+            StreamReader reader = new StreamReader(@"VeDAT_VFEU12_DTC_LIST.xml");
+            StreamWriter writer = new StreamWriter(@"VeDAT_VFEU12_DTC_LIST_new.xml");
+
+            //\t\t<DTC_Description>Cell overvoltage alarm (low level)</DTC_Description>
+            while ((line_buf = reader.ReadLine()) != null)
+            {
+                Sb.AppendLine(line_buf);
+
+                if (line_buf.StartsWith("\t\t<ECU>"))
+                {
+                    ecu_name = line_buf.Split('>')[1].Split('<')[0];
+                    if (ecu_name != ecu_name_buf)
+                    {
+                        if (ecu_name == "BMS")
+                        {
+                            guide_count = 2410000;
+                        }
+                        else if (ecu_name == "TPMS")
+                        {
+                            guide_count = 2410287;
+                        }
+                        else if (ecu_name == "POR")
+                        {
+                            guide_count = 2410322;
+                        }
+                        else if (ecu_name == "AVAS")
+                        {
+                            guide_count = 2410331;
+                        }
+                        else if (ecu_name == "ELC")
+                        {
+                            guide_count = 2410350;
+                        }
+                        else if (ecu_name == "ZFCU")
+                        {
+                            guide_count = 2410525;
+                        }
+                        else if (ecu_name == "DOOR")
+                        {
+                            guide_count = 2410668;
+                        }
+                        else if (ecu_name == "ACCP")
+                        {
+                            guide_count = 2410774;
+                        }
+                        else if (ecu_name == "DCDC")
+                        {
+                            guide_count = 2410780;
+                        }
+                        else if (ecu_name == "DDAW")
+                        {
+                            guide_count = 2410796;
+                        }
+                        else if (ecu_name == "EVCU")
+                        {
+                            guide_count = 2410801;
+                        }
+                        else if (ecu_name == "PDU")
+                        {
+                            guide_count = 2410865;
+                        }
+                        else if (ecu_name == "BCU")
+                        {
+                            guide_count = 2410875;
+                        }
+                        else if (ecu_name == "IPC")
+                        {
+                            guide_count = 2411130;
+                        }
+                        else if (ecu_name == "BSIS")
+                        {
+                            guide_count = 2411176;
+                        }
+                        else if (ecu_name == "MOIS")
+                        {
+                            guide_count = 2411181;
+                        }
+                        else if (ecu_name == "COMP")
+                        {
+                            guide_count = 2411184;
+                        }
+                        else if (ecu_name == "EBS")
+                        {
+                            guide_count = 2411243;
+                        }
+                        else if (ecu_name == "BTMS")
+                        {
+                            guide_count = 2412455;
+                        }
+                        else if (ecu_name == "VCCU")
+                        {
+                            guide_count = 2412479;
+                        }
+                        else if (ecu_name == "IPC")
+                        {
+                            guide_count = 2412806;
+                        }
+
+                    }
+                    
+                    ecu_name_buf = ecu_name;
+
+                }
+                if (line_buf.StartsWith("\t\t<DTC_SAE>"))
+                {
+
+                    sae = line_buf.Split('>')[1].Split('<')[0];
+                }
+                if (line_buf.StartsWith("\t\t<DTC_FMI>"))
+                {
+                    fmi = line_buf.Split('>')[1].Split('<')[0];
+
+                }
+                if (line_buf.StartsWith("\t\t<DTC_Description>"))
+                {
+
+                    descriptions = line_buf.Split('>')[1].Split('<')[0];
+                }
+
+                if (line_buf.StartsWith("\t\t<DTC_Description>"))
+                {
+                    guide_count++;
+                    Sb.AppendLine("\t\t<DTC_Guide_Path>" + guide_count.ToString() + " - " + "DTC Guided Repair Instruction - EBUS - " + ecu_name + " - " + sae + " - " + fmi + " - V01 - EN" + "</DTC_Guide_Path>");
+
+
+                }
+                
+
+            }
+            writer.WriteLine(Sb);
+        }
+
+
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog fbd = new FolderBrowserDialog())      //çekilecek dosyanın konumu belirlenir ---
+            {
+
+
+                DialogResult result = fbd.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    DirectoryInfo type = new DirectoryInfo(fbd.SelectedPath);
+                    FileInfo[] files = type.GetFiles();
+                    String buffer = fbd.SelectedPath; ;
+                    String buffer1 = "";
+
+
+
+                    result = fbd.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                    {
+
+                        buffer1 = fbd.SelectedPath;
+
+                    }
+
+                    for (int i = 0; i < files.Length; i++)
+                    {
+                        Thread.Sleep(1000);
+                        string inpFile = buffer + "\\" + files[i];
+                        //string[] split = files[i].ToString().Split('-');
+                        //string sae = split[4].Remove(0, 1).Remove(5, 1);
+                        //string fmi = split[5].Remove(0, 1).Remove(2, 1);
+                        string file_name = files[i].Name.Remove(files[i].Name.Length - 5, 5);
+                        string outFile = buffer1 + "\\" + file_name;
+                        Convert1(inpFile, outFile, WdSaveFormat.wdFormatPDF);
+                    }
+
+                    //DocumentCore dc = DocumentCore.Load(inpFile);
+                    //dc.Save(outFile);
+
+
+                }
+
+            }
+            GC.Collect();
+        }
+
+        public void Convert1(string input, string output, WdSaveFormat format)
+        {
+            // Create an instance of Word.exe
+            _Application oWord = new Microsoft.Office.Interop.Word.Application
+            {
+
+                // Make this instance of word invisible (Can still see it in the taskmgr).
+                Visible = false
+            };
+
+            // Interop requires objects.
+            object oMissing = System.Reflection.Missing.Value;
+            object isVisible = true;
+            object readOnly = true;     // Does not cause any word dialog to show up
+                                        //object readOnly = false;  // Causes a word object dialog to show at the end of the conversion
+            object oInput = input;
+            object oOutput = output;
+            object oFormat = format;
+
+            // Load a document into our instance of word.exe
+            _Document oDoc = oWord.Documents.Open(
+                ref oInput, ref oMissing, ref readOnly, ref oMissing, ref oMissing,
+                ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
+                ref oMissing, ref isVisible, ref oMissing, ref oMissing, ref oMissing, ref oMissing
+                );
+
+            // Make this document the active document.
+            oDoc.Activate();
+
+            // Save this document using Word
+            oDoc.SaveAs(ref oOutput, ref oFormat, ref oMissing, ref oMissing,
+                ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
+                ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing
+                );
+
+            // Always close Word.exe.
+            oWord.Quit(ref oMissing, ref oMissing, ref oMissing);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog fbd = new FolderBrowserDialog())      //çekilecek dosyanın konumu belirlenir ---
+            {
+
+
+                DialogResult result = fbd.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    DirectoryInfo type = new DirectoryInfo(fbd.SelectedPath);
+                    FileInfo[] files = type.GetFiles();
+                    String buffer = fbd.SelectedPath; ;
+                    String buffer1 = "";
+
+
+
+                    result = fbd.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                    {
+
+                        buffer1 = fbd.SelectedPath;
+
+                    }
+
+                    for (int i = 0; i < files.Length; i++)
+                    {
+                        Thread.Sleep(1000);
+                        string inpFile = buffer + "\\" + files[i];
+                        string[] split = files[i].ToString().Split('-');
+                        string newfilename = buffer1 + "\\" + split[0] + "-" + split[1] + "-" + split[2] + "-" + split[3] + "-" + split[4] + "-" + split[5] + "-" + split[6] + " -" + split[7];
+                        System.IO.File.Move(inpFile, newfilename);
+
+                    }
+
+                    //DocumentCore dc = DocumentCore.Load(inpFile);
+                    //dc.Save(outFile);
+
+
+                }
+
+            }
+            GC.Collect();
+        }
+    }
+}
